@@ -29,17 +29,17 @@ typedef struct
 void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output);
 void PIDA_Cancel(PID_ATUNE_T *pid_atune);
 int PIDA_Runtime(PID_ATUNE_T *pid_atune);
-float PIDA_GetKp(PID_ATUNE *pid_atune);
-float PIDA_GetKi(PID_ATUNE *pid_atune);
-float PIDA_GetKd(PID_ATUNE *pid_atune);
-void PIDA_SetOutputStep(PID_ATUNE *pid_atune, float Step);
-float PIDA_GetOutputStep(PID_ATUNE *pid_atune);
-void PIDA_SetControlType(PID_ATUNE *pid_atune, int Type); //0=PI, 1=PID
-int PIDA_GetControlType(PID_ATUNE *pid_atune);
-void PIDA_SetNoiseBand(PID_ATUNE *pid_atune, float Band);
-float PIDA_GetNoiseBand(PID_ATUNE *pid_atune);
-void PIDA_SetLookbackSec(PID_ATUNE *pid_atune, int value);
-int PIDA_GetLookbackSec(PID_ATUNE *pid_atune);
+float PIDA_GetKp(PID_ATUNE_T *pid_atune);
+float PIDA_GetKi(PID_ATUNE_T *pid_atune);
+float PIDA_GetKd(PID_ATUNE_T *pid_atune);
+void PIDA_SetOutputStep(PID_ATUNE_T *pid_atune, float Step);
+float PIDA_GetOutputStep(PID_ATUNE_T *pid_atune);
+void PIDA_SetControlType(PID_ATUNE_T *pid_atune, int Type); //0=PI, 1=PID
+int PIDA_GetControlType(PID_ATUNE_T *pid_atune);
+void PIDA_SetNoiseBand(PID_ATUNE_T *pid_atune, float Band);
+float PIDA_GetNoiseBand(PID_ATUNE_T *pid_atune);
+void PIDA_SetLookbackSec(PID_ATUNE_T *pid_atune, int value);
+int PIDA_GetLookbackSec(PID_ATUNE_T *pid_atune);
 
 
 #endif
