@@ -2,6 +2,29 @@
 #define PID_AutoTune_v0
 #define LIBRARY_VERSION	0.0.1
 
+typedef struct
+{
+	char isMax, isMin;
+	float *input, *output;
+	float setpoint;
+	float noiseBand;
+	int controlType;
+	char running;
+	unsigned long peak1, peak2, lastTime;
+	int sampleTime;
+	int nLookBack;
+	int peakType;
+	float lastInputs[101];
+	float peaks[10];
+	int peakCount;
+	char justchanged;
+	char justevaled;
+	float absMax, absMin;
+	float oStep;
+	float outputStart;
+	float Ku, Pu;	
+}PID_ATUNE_T;
+
 class PID_ATune
 {
 
@@ -41,7 +64,7 @@ class PID_ATune
 	int nLookBack;
 	int peakType;
 	double lastInputs[101];
-    double peaks[10];
+	double peaks[10];
 	int peakCount;
 	bool justchanged;
 	bool justevaled;
