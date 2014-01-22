@@ -152,7 +152,7 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
    pid_atune->justchanged = FALSE;
 	return FALSE;
 }
-static void FinishUp(PID_ATUNE *pid_atune)
+static void FinishUp(PID_ATUNE_T *pid_atune)
 {
 	  *pid_atune->output = pid_atune->outputStart;
       //we can generate tuning parameters!
@@ -160,51 +160,51 @@ static void FinishUp(PID_ATUNE *pid_atune)
       pid_atune->Pu = (float)(pid_atune->peak1 - pid_atune->peak2) / 1000;
 }
 
-float PIDA_GetKp(PID_ATUNE *pid_atune)
+float PIDA_GetKp(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->controlType == 1 ? 0.6 * pid_atune->Ku : 0.4 * pid_atune->Ku;
 }
 
-float PIDA_GetKi(PID_ATUNE *pid_atune)
+float PIDA_GetKi(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->controlType == 1? 1.2*pid_atune->Ku / pid_atune->Pu : 0.48 * pid_atune->Ku / pid_atune->Pu;  // Ki = Kc/Ti
 }
 
-float PIDA_GetKd(PID_ATUNE *pid_atune)
+float PIDA_GetKd(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->controlType == 1? 0.075 * pid_atune->Ku * pid_atune->Pu : 0;  //Kd = Kc * Td
 }
 
-void PIDA_SetOutputStep(PID_ATUNE *pid_atune, float Step)
+void PIDA_SetOutputStep(PID_ATUNE_T *pid_atune, float Step)
 {
 	pid_atune->oStep = Step;
 }
 
-float PIDA_GetOutputStep(PID_ATUNE *pid_atune)
+float PIDA_GetOutputStep(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->oStep;
 }
 
-void PIDA_SetControlType(PID_ATUNE *pid_atune, int Type) //0=PI, 1=PID
+void PIDA_SetControlType(PID_ATUNE_T *pid_atune, int Type) //0=PI, 1=PID
 {
 	pid_atune->controlType = Type;
 }
-int PIDA_GetControlType(PID_ATUNE *pid_atune)
+int PIDA_GetControlType(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->controlType;
 }
 	
-void PIDA_SetNoiseBand(PID_ATUNE *pid_atune, float Band)
+void PIDA_SetNoiseBand(PID_ATUNE_T *pid_atune, float Band)
 {
 	pid_atune->noiseBand = Band;
 }
 
-float PIDA_GetNoiseBand(PID_ATUNE *pid_atune)
+float PIDA_GetNoiseBand(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->noiseBand;
 }
 
-void PIDA_SetLookbackSec(PID_ATUNE *pid_atune, int value)
+void PIDA_SetLookbackSec(PID_ATUNE_T *pid_atune, int value)
 {
     if (value < 1) value = 1;
 	
@@ -220,7 +220,7 @@ void PIDA_SetLookbackSec(PID_ATUNE *pid_atune, int value)
 	}
 }
 
-int PIDA_GetLookbackSec(PID_ATUNE *pid_atune)
+int PIDA_GetLookbackSec(PID_ATUNE_T *pid_atune)
 {
 	return pid_atune->nLookBack * pid_atune->sampleTime / 1000;
 }
