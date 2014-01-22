@@ -1,22 +1,21 @@
-
 #include "PID_AutoTune_v0.h"
 
 
-PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output)
+static void FinishUp(PID_ATUNE *pid_atune);
+
+
+void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output)
 {
 	memset(pid_atune,0x0,sizeof(pid_atune));
 	pid_atune->input = Input;
 	pid_atune->output = Output;
-	pid_atune->controlType =0 ; //default to PI
+	pid_atune->controlType = 0 ; //default to PI
 	pid_atune->noiseBand = 0.5;
 	pid_atune->running = FALSE;
 	pid_atune->oStep = 30;
 	SetLookbackSec(10);
 	pid_atune->lastTime = millis();
-	
 }
-
-
 
 void PIDA_Cancel(PID_ATUNE_T *pid_atune)
 {
@@ -44,27 +43,32 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
 	}
 	pid_atune->lastTime = now;
 	refVal = *pid_atune->input;
-	justevaled = TRUE;
+	pid_atune->justevaled = TRUE;
 	if(!pid_atune->running)
 	{ //initialize working variables the first time around
 		pid_atune->peakType = 0;
-		pid_atune->peakCount=0;
-		pid_atune->justchanged=FALSE;
-		pid_atune->absMax=refVal;
-		pid_atune->absMin=refVal;
+		pid_atune->peakCount = 0;
+		pid_atune->justchanged = FALSE;
+		pid_atune->absMax = refVal;
+		pid_atune->absMin = refVal;
 		pid_atune->setpoint = refVal;
-		pid_atune->running = true;
+		pid_atune->running = TRUE;
 		pid_atune->outputStart = *pid_atune->output;
 		*pid_atune->output = pid_atune->outputStart + pid_atune->oStep;
 	}
 	else
 	{
-		if(pid_atune->refVal > pid_atune->absMax)pid_atune->absMax = pid_atune->refVal;
-		if(pid_atune->refVal < pid_atune->absMin)pid_atune->absMin = pid_atune->refVal;
+		if(pid_atune->refVal > pid_atune->absMax)
+		{
+			pid_atune->absMax = pid_atune->refVal;
+		}
+		if(pid_atune->refVal < pid_atune->absMin)
+		{
+			pid_atune->absMin = pid_atune->refVal;
+		}
 	}
 	
 	//oscillate the output base on the input's relation to the setpoint
-	
 	if(pid_atune->refVal > pid_atune->setpoint + pid_atune->noiseBand) 
 	{
 		*pid_atune->output = pid_atune->outputStart - pid_atune->oStep;
@@ -102,7 +106,7 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
   {
     if(pid_atune->peakType == 0)
     {
-    	pid_atune->peakType=1;
+    	pid_atune->peakType = 1;
     }
     if(pid_atune->peakType == -1)
     {
@@ -116,7 +120,7 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
   }
   else if(pid_atune->isMin)
   {
-    if(pid_atune->peakType==0)
+    if(pid_atune->peakType == 0)
     {
     	peakType = -1;
     }
@@ -133,14 +137,15 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
     }
   }
   
-  if(pid_atune->justchanged && pid_atune->peakCount>2)
+  if(pid_atune->justchanged && pid_atune->peakCount > 2)
   { //we've transitioned.  check if we can autotune based on the last peaks
-    float avgSeparation = (abs(peaks[peakCount-1]-peaks[peakCount-2])+abs(peaks[peakCount-2]-peaks[peakCount-3]))/2;
+    float avgSeparation = (abs(pid_atune->peaks[pid_atune->peakCount-1] - pid_atune->peaks[pid_atune->peakCount-2])
+			 + abs(pid_atune->peaks[pid_atune->peakCount-2] - pid_atune->peaks[pid_atune->peakCount - 3]))/2;
     if( avgSeparation < 0.05*(absMax-absMin))
     {
-		FinishUp(pid_atune);
-      pid_atune->running = FALSE;
-	  return TRUE;
+	FinishUp(pid_atune);
+	pid_atune->running = FALSE;
+	return TRUE;
 	 
     }
   }
@@ -152,7 +157,7 @@ static void FinishUp(PID_ATUNE *pid_atune)
 	  *pid_atune->output = pid_atune->outputStart;
       //we can generate tuning parameters!
       pid_atune->Ku = 4*(2*pid_atune->oStep)/((pid_atune->absMax - pid_atune->absMin)*3.14159);
-      pid_atune->Pu = (float)(peak1-peak2) / 1000;
+      pid_atune->Pu = (float)(pid_atune->peak1 - pid_atune->peak2) / 1000;
 }
 
 float PIDA_GetKp(PID_ATUNE *pid_atune)
@@ -167,7 +172,7 @@ float PID_ATune::GetKi(PID_ATUNE *pid_atune)
 
 float PID_ATune::GetKd(PID_ATUNE *pid_atune)
 {
-	return pid_atune->controlType==1? 0.075 * pid_atune->Ku * pid_atune->Pu : 0;  //Kd = Kc * Td
+	return pid_atune->controlType == 1? 0.075 * pid_atune->Ku * pid_atune->Pu : 0;  //Kd = Kc * Td
 }
 
 void PIDA_SetOutputStep(PID_ATUNE *pid_atune, float Step)
