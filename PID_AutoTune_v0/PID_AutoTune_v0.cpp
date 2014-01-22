@@ -165,12 +165,12 @@ float PIDA_GetKp(PID_ATUNE *pid_atune)
 	return pid_atune->controlType == 1 ? 0.6 * pid_atune->Ku : 0.4 * pid_atune->Ku;
 }
 
-float PID_ATune::GetKi(PID_ATUNE *pid_atune)
+float PIDA_GetKi(PID_ATUNE *pid_atune)
 {
 	return pid_atune->controlType == 1? 1.2*pid_atune->Ku / pid_atune->Pu : 0.48 * pid_atune->Ku / pid_atune->Pu;  // Ki = Kc/Ti
 }
 
-float PID_ATune::GetKd(PID_ATUNE *pid_atune)
+float PIDA_GetKd(PID_ATUNE *pid_atune)
 {
 	return pid_atune->controlType == 1? 0.075 * pid_atune->Ku * pid_atune->Pu : 0;  //Kd = Kc * Td
 }
