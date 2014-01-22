@@ -141,7 +141,7 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
   { //we've transitioned.  check if we can autotune based on the last peaks
     float avgSeparation = (abs(pid_atune->peaks[pid_atune->peakCount-1] - pid_atune->peaks[pid_atune->peakCount-2])
 			 + abs(pid_atune->peaks[pid_atune->peakCount-2] - pid_atune->peaks[pid_atune->peakCount - 3]))/2;
-    if( avgSeparation < 0.05*(absMax-absMin))
+    if( avgSeparation < 0.05*(pid_atune->absMax - pid_atune->absMin))
     {
 	FinishUp(pid_atune);
 	pid_atune->running = FALSE;
@@ -149,7 +149,7 @@ int PIDA_Runtime(PID_ATUNE_T *pid_atune)
 	 
     }
   }
-   pid_atune->justchanged = FALSE;
+	pid_atune->justchanged = FALSE;
 	return FALSE;
 }
 static void FinishUp(PID_ATUNE_T *pid_atune)
