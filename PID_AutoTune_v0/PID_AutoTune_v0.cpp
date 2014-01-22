@@ -1,196 +1,221 @@
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
 
-#include <PID_AutoTune_v0.h>
+#include "PID_AutoTune_v0.h"
 
 
-PID_ATune::PID_ATune(double* Input, double* Output)
+PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output)
 {
-	input = Input;
-	output = Output;
-	controlType =0 ; //default to PI
-	noiseBand = 0.5;
-	running = false;
-	oStep = 30;
+	memset(pid_atune,0x0,sizeof(pid_atune));
+	pid_atune->input = Input;
+	pid_atune->output = Output;
+	pid_atune->controlType =0 ; //default to PI
+	pid_atune->noiseBand = 0.5;
+	pid_atune->running = FALSE;
+	pid_atune->oStep = 30;
 	SetLookbackSec(10);
-	lastTime = millis();
+	pid_atune->lastTime = millis();
 	
 }
 
 
 
-void PID_ATune::Cancel()
+void PIDA_Cancel(PID_ATUNE_T *pid_atune)
 {
-	running = false;
+	pid_atune->running = FALSE;
 } 
  
-int PID_ATune::Runtime()
+int PIDA_Runtime(PID_ATUNE_T *pid_atune)
 {
-	justevaled=false;
-	if(peakCount>9 && running)
-	{
-		running = false;
-		FinishUp();
-		return 1;
-	}
-	unsigned long now = millis();
+	unsigned long now;
+	float refVal;
+	int i;
 	
-	if((now-lastTime)<sampleTime) return false;
-	lastTime = now;
-	double refVal = *input;
-	justevaled=true;
-	if(!running)
+	pid_atune->justevaled = FALSE;
+	if(pid_atune->peakCount > 9 && pid_atune->running)
+	{
+		pid_atune->running = FALSE;
+		FinishUp(pid_atune);
+		return TRUE;
+	}
+	
+	now = millis();
+	if((now - pid_atune->lastTime) < pid_atune->sampleTime) 
+	{
+		return FALSE;
+	}
+	pid_atune->lastTime = now;
+	refVal = *pid_atune->input;
+	justevaled = TRUE;
+	if(!pid_atune->running)
 	{ //initialize working variables the first time around
-		peakType = 0;
-		peakCount=0;
-		justchanged=false;
-		absMax=refVal;
-		absMin=refVal;
-		setpoint = refVal;
-		running = true;
-		outputStart = *output;
-		*output = outputStart+oStep;
+		pid_atune->peakType = 0;
+		pid_atune->peakCount=0;
+		pid_atune->justchanged=FALSE;
+		pid_atune->absMax=refVal;
+		pid_atune->absMin=refVal;
+		pid_atune->setpoint = refVal;
+		pid_atune->running = true;
+		pid_atune->outputStart = *pid_atune->output;
+		*pid_atune->output = pid_atune->outputStart + pid_atune->oStep;
 	}
 	else
 	{
-		if(refVal>absMax)absMax=refVal;
-		if(refVal<absMin)absMin=refVal;
+		if(pid_atune->refVal > pid_atune->absMax)pid_atune->absMax = pid_atune->refVal;
+		if(pid_atune->refVal < pid_atune->absMin)pid_atune->absMin = pid_atune->refVal;
 	}
 	
 	//oscillate the output base on the input's relation to the setpoint
 	
-	if(refVal>setpoint+noiseBand) *output = outputStart-oStep;
-	else if (refVal<setpoint-noiseBand) *output = outputStart+oStep;
+	if(pid_atune->refVal > pid_atune->setpoint + pid_atune->noiseBand) 
+	{
+		*pid_atune->output = pid_atune->outputStart - pid_atune->oStep;
+	}
+	else if (pid_atune->refVal < pid_atune->setpoint - pid_atune->noiseBand) 
+	{
+		*pid_atune->output = pid_atune->outputStart + pid_atune->oStep;
+	}
 	
 	
   //bool isMax=true, isMin=true;
-  isMax=true;isMin=true;
+  pid_atune->isMax = TRUE;
+  pid_atune->isMin = TRUE;
   //id peaks
-  for(int i=nLookBack-1;i>=0;i--)
+  for(i= pid_atune->nLookBack - 1;i >= 0; i--)
   {
-    double val = lastInputs[i];
-    if(isMax) isMax = refVal>val;
-    if(isMin) isMin = refVal<val;
-    lastInputs[i+1] = lastInputs[i];
-  }
-  lastInputs[0] = refVal;  
-  if(nLookBack<9)
-  {  //we don't want to trust the maxes or mins until the inputs array has been filled
-	return 0;
-	}
-  
-  if(isMax)
-  {
-    if(peakType==0)peakType=1;
-    if(peakType==-1)
+    float val = pid_atune->lastInputs[i];
+    if(pid_atune->isMax)
     {
-      peakType = 1;
-      justchanged=true;
-      peak2 = peak1;
+    	pid_atune->isMax = pid_atune->refVal>val;
     }
-    peak1 = now;
-    peaks[peakCount] = refVal;
+    if(pid_atune->isMin)
+    {
+    	pid_atune->isMin = pid_atune->refVal<val;
+    }
+    pid_atune->lastInputs[i+1] = pid_atune->lastInputs[i];
+  }
+  pid_atune->lastInputs[0] = refVal;  
+  if(pid_atune->nLookBack < 9)
+  {  //we don't want to trust the maxes or mins until the inputs array has been filled
+	return FALSE;
+  }
+  
+  if(pid_atune->isMax)
+  {
+    if(pid_atune->peakType == 0)
+    {
+    	pid_atune->peakType=1;
+    }
+    if(pid_atune->peakType == -1)
+    {
+      pid_atune->peakType = 1;
+      pid_atune->justchanged = TRUE;
+      pid_atune->peak2 = pid_atune->peak1;
+    }
+    pid_atune->peak1 = now;
+    pid_atune->peaks[pid_atune->peakCount] = refVal;
    
   }
-  else if(isMin)
+  else if(pid_atune->isMin)
   {
-    if(peakType==0)peakType=-1;
-    if(peakType==1)
+    if(pid_atune->peakType==0)
     {
-      peakType=-1;
-      peakCount++;
-      justchanged=true;
+    	peakType = -1;
+    }
+    if(pid_atune->peakType == 1)
+    {
+      pid_atune->peakType = -1;
+      pid_atune->peakCount++;
+      pid_atune->justchanged = TRUE;
     }
     
-    if(peakCount<10)peaks[peakCount] = refVal;
+    if(pid_atune->peakCount < 10)
+    {
+    	pid_atune->peaks[pid_atune->peakCount] = refVal;
+    }
   }
   
-  if(justchanged && peakCount>2)
+  if(pid_atune->justchanged && pid_atune->peakCount>2)
   { //we've transitioned.  check if we can autotune based on the last peaks
-    double avgSeparation = (abs(peaks[peakCount-1]-peaks[peakCount-2])+abs(peaks[peakCount-2]-peaks[peakCount-3]))/2;
+    float avgSeparation = (abs(peaks[peakCount-1]-peaks[peakCount-2])+abs(peaks[peakCount-2]-peaks[peakCount-3]))/2;
     if( avgSeparation < 0.05*(absMax-absMin))
     {
-		FinishUp();
-      running = false;
-	  return 1;
+		FinishUp(pid_atune);
+      pid_atune->running = FALSE;
+	  return TRUE;
 	 
     }
   }
-   justchanged=false;
-	return 0;
+   pid_atune->justchanged = FALSE;
+	return FALSE;
 }
-void PID_ATune::FinishUp()
+static void FinishUp(PID_ATUNE *pid_atune)
 {
-	  *output = outputStart;
+	  *pid_atune->output = pid_atune->outputStart;
       //we can generate tuning parameters!
-      Ku = 4*(2*oStep)/((absMax-absMin)*3.14159);
-      Pu = (double)(peak1-peak2) / 1000;
+      pid_atune->Ku = 4*(2*pid_atune->oStep)/((pid_atune->absMax - pid_atune->absMin)*3.14159);
+      pid_atune->Pu = (float)(peak1-peak2) / 1000;
 }
 
-double PID_ATune::GetKp()
+float PIDA_GetKp(PID_ATUNE *pid_atune)
 {
-	return controlType==1 ? 0.6 * Ku : 0.4 * Ku;
+	return pid_atune->controlType == 1 ? 0.6 * pid_atune->Ku : 0.4 * pid_atune->Ku;
 }
 
-double PID_ATune::GetKi()
+float PID_ATune::GetKi(PID_ATUNE *pid_atune)
 {
-	return controlType==1? 1.2*Ku / Pu : 0.48 * Ku / Pu;  // Ki = Kc/Ti
+	return pid_atune->controlType == 1? 1.2*pid_atune->Ku / pid_atune->Pu : 0.48 * pid_atune->Ku / pid_atune->Pu;  // Ki = Kc/Ti
 }
 
-double PID_ATune::GetKd()
+float PID_ATune::GetKd(PID_ATUNE *pid_atune)
 {
-	return controlType==1? 0.075 * Ku * Pu : 0;  //Kd = Kc * Td
+	return pid_atune->controlType==1? 0.075 * pid_atune->Ku * pid_atune->Pu : 0;  //Kd = Kc * Td
 }
 
-void PID_ATune::SetOutputStep(double Step)
+void PIDA_SetOutputStep(PID_ATUNE *pid_atune, float Step)
 {
-	oStep = Step;
+	pid_atune->oStep = Step;
 }
 
-double PID_ATune::GetOutputStep()
+float PIDA_GetOutputStep(PID_ATUNE *pid_atune)
 {
-	return oStep;
+	return pid_atune->oStep;
 }
 
-void PID_ATune::SetControlType(int Type) //0=PI, 1=PID
+void PIDA_SetControlType(PID_ATUNE *pid_atune, int Type) //0=PI, 1=PID
 {
-	controlType = Type;
+	pid_atune->controlType = Type;
 }
-int PID_ATune::GetControlType()
+int PIDA_GetControlType(PID_ATUNE *pid_atune)
 {
-	return controlType;
+	return pid_atune->controlType;
 }
 	
-void PID_ATune::SetNoiseBand(double Band)
+void PIDA_SetNoiseBand(PID_ATUNE *pid_atune, float Band)
 {
-	noiseBand = Band;
+	pid_atune->noiseBand = Band;
 }
 
-double PID_ATune::GetNoiseBand()
+float PIDA_GetNoiseBand(PID_ATUNE *pid_atune)
 {
-	return noiseBand;
+	return pid_atune->noiseBand;
 }
 
-void PID_ATune::SetLookbackSec(int value)
+void PIDA_SetLookbackSec(PID_ATUNE *pid_atune, int value)
 {
-    if (value<1) value = 1;
+    if (value < 1) value = 1;
 	
-	if(value<25)
+	if(value < 25)
 	{
-		nLookBack = value * 4;
-		sampleTime = 250;
+		pid_atune->nLookBack = value * 4;
+		pid_atune->sampleTime = 250;
 	}
 	else
 	{
-		nLookBack = 100;
-		sampleTime = value*10;
+		pid_atune->nLookBack = 100;
+		pid_atune->sampleTime = value*10;
 	}
 }
 
-int PID_ATune::GetLookbackSec()
+int PIDA_GetLookbackSec(PID_ATUNE *pid_atune)
 {
-	return nLookBack * sampleTime / 1000;
+	return pid_atune->nLookBack * pid_atune->sampleTime / 1000;
 }
