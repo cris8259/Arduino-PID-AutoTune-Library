@@ -26,7 +26,7 @@ typedef struct
 }PID_ATUNE_T;
 
 
-void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output)
+void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output);
 void PIDA_Cancel(PID_ATUNE_T *pid_atune);
 int PIDA_Runtime(PID_ATUNE_T *pid_atune);
 float PIDA_GetKp(PID_ATUNE *pid_atune);
