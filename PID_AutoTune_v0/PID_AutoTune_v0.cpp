@@ -1,10 +1,10 @@
 #include "PID_AutoTune_v0.h"
 
 
-static void FinishUp(PID_ATUNE *pid_atune);
+static void FinishUp(PID_ATUNE_T *pid_atune);
 
 
-void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float* Input, float* Output)
+void PIDA_ATuneInit(PID_ATUNE_T *pid_atune, float *Input, float *Output)
 {
 	memset(pid_atune,0x0,sizeof(pid_atune));
 	pid_atune->input = Input;
